@@ -3,6 +3,16 @@ iPython notebook and supporting data to accompany "The SKMT Algorithm: A method 
 underlying protein entanglement."\
 [![DOI](https://zenodo.org/badge/617996455.svg)](https://zenodo.org/badge/latestdoi/617996455)
 
+## Installation 
+
+```shell
+git clone https://github.com/arronelab/SWRITHE.git
+cd SWRITHE
+make
+```
+
+
+
 ## FAQs
 
 ### How do I upload my own PDB file?
