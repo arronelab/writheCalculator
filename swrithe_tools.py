@@ -565,8 +565,10 @@ def compare_prep(pdb_code):
     
 
 def compare_molecules(pdb_code1,pdb_code2,cutOff):
-    compare_prep(pdb_code1)
-    compare_prep(pdb_code2)
+    if not os.path.isfile(r"molecules/"+pdb_code1+r".dat"):
+        compare_prep(pdb_code1)
+    if not os.path.isfile(r"molecules/"+pdb_code2+r".dat"):
+        compare_prep(pdb_code2)
     get_data=subprocess.check_output(r"compareFingerPrints "+r"molecules/"+pdb_code1+r".xyz"+r" "+r"molecules/"+pdb_code2+r".xyz "+str(cutOff),shell=True, encoding='utf-8')
     return toPairs(list(extract_nums(get_data)))
 
