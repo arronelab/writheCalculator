@@ -1,5 +1,6 @@
 # SWRITHE
-iPython notebook and supporting data to accompany "Novel topological methods for identifying surprising protein tertiary structure relationships."\
+iPython notebook and supporting data to accompany "The SKMT Algorithm: A method for assessing and comparing
+underlying protein entanglement."\
 [![DOI](https://zenodo.org/badge/617996455.svg)](https://zenodo.org/badge/latestdoi/617996455)
 
 ## FAQs
