@@ -573,7 +573,7 @@ def compare_molecules(pdb_code1,pdb_code2,cutOff):
 def compare_database(pdb_code,cutOff=0.05):
     if not os.path.isdir(os.getcwd()+'/comparisons/'):
         os.mkdir(os.getcwd()+'/comparisons/')
-    comstr = [r"compareToLibrary",r"molecules/"+pdb_code+r".xyz",r"CleanedKMT",str(cutOff),pdb_code]
+    comstr = [r"compareToLibrary",r"molecules/"+pdb_code+r".xyz",r"data/CleanedKMT",str(cutOff),pdb_code]
     popen = subprocess.Popen(comstr, stdout=subprocess.PIPE, universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line 
