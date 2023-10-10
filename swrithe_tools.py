@@ -15,6 +15,11 @@ from tempfile import gettempdir
 import statsmodels.nonparametric.smoothers_lowess as sm
 from sklearn.cluster import DBSCAN
 import subprocess
+import requests
+from bs4 import BeautifulSoup
+import csv
+from collections import Counter
+import pandas as pd
 
 
 def get_pdb(pdb_code):
@@ -761,6 +766,28 @@ def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
                 flout.write(strout+'\n')
             flout.write(' '.join(map(str,subset_similar[-1])))
         return subset_similar
+
+def view_CATH_percentages(pdb_code,cutoff=0.05,pc_sim=0.8):
+    comp_codes = [i[-1][-8:-4] for i in find_globally_similar_proteins(pdb_code,cutoff,pc_sim)]
+    t=[]
+    for code in comp_codes:
+        page = requests.get('https://www.rcsb.org/annotations/'+code.upper())
+        soup = BeautifulSoup(page.content, "html.parser")
+        stats = soup.find(id="maincontentcontainer")
+        stats_elements = stats.find_all("a", class_="querySearchLink")
+        tmp=[]
+        for i in stats_elements:
+            if 'CATH' in i['href']:
+                tmp.append(i.text)
+        if len(tmp)>0:
+            t.append(tmp[2])
+        else:
+            t.append('No CATH Topology Determined')
+    letter_counts = Counter(t)
+    fldf = pd.DataFrame.from_dict(letter_counts, orient='index')
+    fldf['Percentage'] = np.round(fldf[0]*100/sum(fldf[0]),1)
+    fldf = fldf.sort_values('Percentage',ascending=False)
+    return fldf.head()
 
 def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.8):
     z = np.linspace(0, height_z, int(height_z))
