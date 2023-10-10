@@ -739,7 +739,29 @@ def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
                 flout.write(strout+'\n')
             flout.write(' '.join(map(str,globally_similar[-1])))
         return globally_similar
-        
+
+def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat'):
+        return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
+    else:
+        comps = []
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat') as flin:
+            for line in flin:
+                comps+=[line.split(' ')]
+        subset_similar = []
+        for i in range(len(comps)):
+            for j in range(len(comps[i])-1):
+                comps[i][j] = float(comps[i][j])
+            comps[i][-1] = comps[i][-1][:-1]
+            if comps[i][-3]>=pc_sim:
+                subset_similar.append(comps[i])
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+            for i in range(len(subset_similar)-1):
+                strout = ' '.join(map(str,subset_similar[i]))
+                flout.write(strout+'\n')
+            flout.write(' '.join(map(str,subset_similar[-1])))
+        return subset_similar
+
 def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.8):
     z = np.linspace(0, height_z, int(height_z))
     theta = np.linspace(0, 2*np.pi,25)
