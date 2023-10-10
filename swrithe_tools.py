@@ -158,15 +158,12 @@ def get_fasta_file(pdb_code):
 
 def skmt(pdb_code,chain):
     pdb_file_loc=r'molecules/'+pdb_code+'.pdb'
-    pdb_to_fasta(pdb_code,chain)
-    get_fasta_file(pdb_code)
     mol = get_coords(pdb_file_loc,chain)
     if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
         pdb_to_fasta(pdb_file_loc,chain)
     if not os.path.isdir(pdb_file_loc[:-4]+'.fasta output/'):
         get_fasta_file(pdb_file_loc)
     ss = get_ss_fp_psipred(pdb_file_loc[:-4]+'.fasta')
-    #shutil.rmtree(pdb_file_loc[:-4]+'.fasta output')
     splitcurve = []
     index = 0
     for i in ss:
@@ -720,6 +717,28 @@ def compare_database(pdb_code,cutOff=0.05):
 def compareToDatabase(pdb_code,cutoff=0.05):
     for path in compare_database(pdb_code,cutoff):
         print(path,  end='\x1b[1K\r')
+        
+def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat'):
+        return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
+    else:
+        comps = []
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat') as flin:
+            for line in flin:
+                comps+=[line.split(' ')]
+        globally_similar = []
+        for i in range(len(comps)):
+            for j in range(len(comps[i])-1):
+                comps[i][j] = float(comps[i][j])
+            comps[i][-1] = comps[i][-1][:-1]
+            if comps[i][-2]>pc_sim and comps[i][-3]>pc_sim:
+                globally_similar.append(comps[i])
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+            for i in range(len(globally_similar)-1):
+                strout = ' '.join(map(str,globally_similar[i]))
+                flout.write(strout+'\n')
+            flout.write(' '.join(map(str,globally_similar[-1])))
+        return globally_similar
         
 def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.8):
     z = np.linspace(0, height_z, int(height_z))
