@@ -467,10 +467,143 @@ def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_sub
         fig.show()
     else: 
         print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
+
+def acnPlot(pdb_code):
+    colors = px.colors.sequential.dense
+    if os.path.isfile("molecules/"+pdb_code+".dat"):
+        fp = np.loadtxt("molecules/"+pdb_code+".dat")
+        DI=fp[fp[:,0]==1]
+        x = DI[:,1]
+        y = DI[:,3]
+        fig=go.Figure()
+        fig.add_trace(go.Scatter(x=x,y=y,mode='lines',name=pdb_code.upper(),marker=dict(color='black',size=10),
+                             line=dict(width=5)))
+        fig.update_layout(
+            autosize=False,
+            width=1000,
+            height=0.75*1000)
+        fig.update_layout(
+            font_family="Tenorite",
+            font_color="black",
+            title_font_family="Tenorite",
+            title_font_color="black",
+            legend_title_font_color="black",
+            xaxis_title="Subsection Length",
+            yaxis_title="acn",
+            font=dict(size=28)
+        )
+        fig.update_layout(template='simple_white')
+        fig.show()
+    else: 
+        print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
     
 def calculate_writheFP(pdb_code):
     os.popen(r"getFingerPrint "+r"molecules/"+pdb_code+r".xyz"+r" "+r"molecules/"+pdb_code+r".dat")  
     
+
+def view_similar_sections(pdb_code1,pdb_code2,cutOff):
+    comp = compare_molecules(pdb_code1,pdb_code2,cutOff)
+    mol1 = np.genfromtxt('molecules/'+pdb_code1+'.xyz')
+    mol2 = np.genfromtxt('molecules/'+pdb_code2+'.xyz')
+    DI1 = np.genfromtxt("molecules/"+pdb_code1+".dat")
+    DI2 = np.genfromtxt("molecules/"+pdb_code2+".dat")
+    x1, y1, z1 = mol1[:,0], mol1[:,1], mol1[:,2]
+    x2, y2, z2 = mol2[:,0], mol2[:,1], mol2[:,2]
+    colors = px.colors.sequential.dense
+    colspace = np.linspace(0,10,len(comp[0])+2)[1:-1]
+    cols1 = ['black' for i in range(len(x1))]
+    cols2 = ['black' for i in range(len(x2))]
+    for i in range(0,len(comp[0]),2):
+        stindex = comp[0][i][0]
+        endex = comp[0][i][1]
+        for j in range(stindex,endex):
+            cols1[j] = colors[int(colspace[i])]
+    for i in range(1,len(comp[0]),2):
+        stindex = comp[0][i][0]
+        endex = comp[0][i][1]
+        for j in range(stindex,endex):
+            cols2[j] = colors[int(colspace[i-1])]
+    print(pdb_code1)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter3d(x=x1, y=y1, z=z1,name=pdb_code1,
+        marker=dict(
+            size=1,
+            color=cols1
+        ),
+        line=dict(
+            width=15,
+            color=cols1
+        ),))
+    fig['layout']['showlegend'] = False
+    fig.update_layout(
+    scene=dict(
+        xaxis_title='',
+        yaxis_title='',
+        zaxis_title='',
+        aspectratio = dict( x=1, y=1, z=1 ),
+        aspectmode = 'manual',
+        xaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),
+        yaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),
+        zaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),),
+    )
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+    fig.show()
+    print(pdb_code2)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter3d(x=x2, y=y2, z=z2,name=pdb_code2,
+        marker=dict(
+            size=1,
+            color=cols2
+        ),
+        line=dict(
+            width=15,
+            color=cols2
+        ),))
+    fig['layout']['showlegend'] = False
+    fig.update_layout(
+    scene=dict(
+        xaxis_title='',
+        yaxis_title='',
+        zaxis_title='',
+        aspectratio = dict( x=1, y=1, z=1 ),
+        aspectmode = 'manual',
+        xaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),
+        yaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),
+        zaxis = dict(
+            gridcolor="white",
+            showbackground=False,
+            zerolinecolor="white",
+            nticks=0,
+            showticklabels=False),),
+    )
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+    fig.show()
+
 
 def view_molecule_helical(pdb_code):
     if os.path.isfile('molecules/'+pdb_code+'.xyz'):
