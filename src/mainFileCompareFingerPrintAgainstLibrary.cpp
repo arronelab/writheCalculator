@@ -43,7 +43,11 @@ int main( int argc, const char* argv[] )
 	  std::ifstream myfile2;
 	  std::string fl = entry.path();
 	  index++;
-	  std::cout << "\r" <<" compared "<< index <<" of "<<" 10737";
+	  using std::filesystem::directory_iterator;
+	  using fp = bool (*)( const std::filesystem::path&);
+	  int size_t = std::count_if(directory_iterator(directory), directory_iterator{}, (fp)std::filesystem::is_regular_file);
+	  ///int dir_size = std::count_if(std::filesystem::directory_iterator(directory), {}, std::filesystem::is_regular_file);
+	  std::cout << "\r" <<" Compared "<< index <<" of "<<size_t;
 	  myfile2.open(fl);
 	  std::vector<point> points2;
 	  if (myfile2.is_open()) { 

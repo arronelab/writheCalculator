@@ -23,11 +23,9 @@ import pandas as pd
 
 
 def get_pdb(pdb_code):
-    if not os.path.isdir(os.getcwd()+'/molecules/'):
-        os.mkdir(os.getcwd()+'/molecules/')
     # Fetch and load structure
-    urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'molecules/'+pdb_code+'.pdb')
-    print('File saved to: '+'molecules/'+pdb_code+'.pdb')
+    urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'CleanedSKMT/'+pdb_code+'.pdb')
+    print('File saved to: '+'CleanedSKMT/'+pdb_code+'.pdb')
 
 def get_chains_from_biotite(pdb_code):
     # Fetch and load structure
@@ -100,7 +98,7 @@ def write_curve_to_file(curve,outfile_name):
         f.close()
         
 def pdb_to_fasta(pdb_code,chain):
-    pdb_file_loc=r'molecules/'+pdb_code+'.pdb'
+    pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
     aa3to1={
    'ALA':'A', 'VAL':'V', 'PHE':'F', 'PRO':'P', 'MET':'M',
    'ILE':'I', 'LEU':'L', 'ASP':'D', 'GLU':'E', 'LYS':'K',
@@ -158,77 +156,88 @@ def get_coords(pdb_file_loc,chain):
     return ca
 
 def get_fasta_file(pdb_code):
-    pdb_file_loc=r'molecules/'+pdb_code+'.pdb'
+    pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
     single_submit(pdb_file_loc[:-4]+'.fasta', "foo@bar.com", '')
 
 def skmt(pdb_code,chain):
-    pdb_file_loc=r'molecules/'+pdb_code+'.pdb'
-    mol = get_coords(pdb_file_loc,chain)
-    if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
-        pdb_to_fasta(pdb_file_loc,chain)
-    if not os.path.isdir(pdb_file_loc[:-4]+'.fasta output/'):
-        get_fasta_file(pdb_file_loc)
-    ss = get_ss_fp_psipred(pdb_file_loc[:-4]+'.fasta')
-    splitcurve = []
-    index = 0
-    for i in ss:
-        splitcurve.append(mol[index:index+i[1]])
-        index+=i[1]
-    newcurve = []
-    for i in range(len(splitcurve)):
-        for j in range(len(splitcurve[i])):
-            newcurve.append(splitcurve[i][j])
-    for subsec in range(len(splitcurve)):
-        if len(splitcurve[subsec])>2:
-            checks = []
-            for idx in range(1,len(splitcurve[subsec])-1):
-                p1 = 1.25*splitcurve[subsec][0]-splitcurve[subsec][1]
-                p2 = splitcurve[subsec][idx]
-                p3 = 1.25*splitcurve[subsec][-1]-splitcurve[subsec][-2]
-                for edge in get_all_edges(newcurve):
-                    q0 = edge[0]
-                    q1 = edge[1]
-                    checks.append(intersect_line_triangle(q0,q1,p1,p2,p3))
-            if not any(checks):
+    if not os.path.isfile(r'CleanedSKMT/'+pdb_code+'.xyz'):
+        pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
+        mol = get_coords(pdb_file_loc,chain)
+        if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
+            pdb_to_fasta(pdb_code,chain)
+        if not os.path.isdir(pdb_file_loc[:-4]+'.fasta output/'):
+            get_fasta_file(pdb_code)
+        ss = get_ss_fp_psipred(pdb_file_loc[:-4]+'.fasta')
+        shutil.rmtree(pdb_file_loc[:-4]+'.fasta output/')
+        os.remove(r'CleanedSKMT/'+pdb_code+'.pdb')
+        os.remove(pdb_file_loc[:-4]+'.fasta')
+        splitcurve = []
+        index = 0
+        for i in ss:
+            splitcurve.append(mol[index:index+i[1]])
+            index+=i[1]
+        newcurve = []
+        for i in range(len(splitcurve)):
+            for j in range(len(splitcurve[i])):
+                newcurve.append(splitcurve[i][j])
+        for subsec in range(len(splitcurve)):
+            if len(splitcurve[subsec])>2:
+                checks = []
+                for idx in range(1,len(splitcurve[subsec])-1):
+                    p1 = 1.25*splitcurve[subsec][0]-splitcurve[subsec][1]
+                    p2 = splitcurve[subsec][idx]
+                    p3 = 1.25*splitcurve[subsec][-1]-splitcurve[subsec][-2]
+                    for edge in get_all_edges(newcurve):
+                        q0 = edge[0]
+                        q1 = edge[1]
+                        checks.append(intersect_line_triangle(q0,q1,p1,p2,p3))
+                if not any(checks):
+                    splitcurve[subsec] = [splitcurve[subsec][0]]
+                    newcurve = []
+                    for l in range(len(splitcurve)):
+                        for m in range(len(splitcurve[l])):
+                            newcurve.append(splitcurve[l][m])
+                else:
+                    idx=2
+                    while idx<len(splitcurve[subsec]):
+                        newcurve = []
+                        for i in range(len(splitcurve)):
+                            for j in range(len(splitcurve[i])):
+                                newcurve.append(splitcurve[i][j])
+                        p1 = splitcurve[subsec][idx-2]
+                        p2 = splitcurve[subsec][idx-1]
+                        p3 = splitcurve[subsec][idx]
+                        checks = []
+                        for edge in get_all_edges(newcurve):
+                            q0 = edge[0]
+                            q1 = edge[1]
+                            checks.append(intersect_line_triangle(q0,q1,p1,p2,p3))
+                        if not any(checks):
+                            splitcurve[subsec] = np.delete(splitcurve[subsec],idx-1,axis=0)
+                            idx=2
+                        else:
+                            idx+=1
+            else:
                 splitcurve[subsec] = [splitcurve[subsec][0]]
                 newcurve = []
                 for l in range(len(splitcurve)):
                     for m in range(len(splitcurve[l])):
                         newcurve.append(splitcurve[l][m])
-            else:
-                idx=2
-                while idx<len(splitcurve[subsec]):
-                    newcurve = []
-                    for i in range(len(splitcurve)):
-                        for j in range(len(splitcurve[i])):
-                            newcurve.append(splitcurve[i][j])
-                    p1 = splitcurve[subsec][idx-2]
-                    p2 = splitcurve[subsec][idx-1]
-                    p3 = splitcurve[subsec][idx]
-                    checks = []
-                    for edge in get_all_edges(newcurve):
-                        q0 = edge[0]
-                        q1 = edge[1]
-                        checks.append(intersect_line_triangle(q0,q1,p1,p2,p3))
-                    if not any(checks):
-                        splitcurve[subsec] = np.delete(splitcurve[subsec],idx-1,axis=0)
-                        idx=2
-                    else:
-                        idx+=1
-        else:
-            splitcurve[subsec] = [splitcurve[subsec][0]]
-            newcurve = []
-            for l in range(len(splitcurve)):
-                for m in range(len(splitcurve[l])):
-                    newcurve.append(splitcurve[l][m])
-    newcurve = []
-    for i in range(len(splitcurve)):
-        for j in range(len(splitcurve[i])):
-            newcurve.append(splitcurve[i][j])
-    if not np.array_equal(newcurve[-1],mol[-1]):
-        newcurve.append(mol[-1])
-    write_curve_to_file(newcurve,pdb_file_loc[:-4]+'.xyz')
-    return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
+        newcurve = []
+        for i in range(len(splitcurve)):
+            for j in range(len(splitcurve[i])):
+                newcurve.append(splitcurve[i][j])
+        if not np.array_equal(newcurve[-1],mol[-1]):
+            newcurve.append(mol[-1])
+        write_curve_to_file(newcurve,pdb_file_loc[:-4]+'.xyz')
+        return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
+    else:
+        pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
+        if os.path.isfile(r'CleanedSKMT/'+pdb_code+'.pdb'):
+            os.remove(r'CleanedSKMT/'+pdb_code+'.pdb')
+        if os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
+            os.remove(pdb_file_loc[:-4]+'.fasta')
+        return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
 
 def view_molecule_subset(molecule,start=0,end=-1):
     mol = np.genfromtxt(molecule)
@@ -404,8 +413,8 @@ def find_roadie_sections(fp):
 
 def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_subsections=False):
     colors = px.colors.sequential.dense
-    if os.path.isfile("molecules/"+pdb_code+".dat"):
-        fp = np.loadtxt("molecules/"+pdb_code+".dat")
+    if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
+        fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
         DI=fp[fp[:,0]==1]
         if highlight_helical_subsections:
             try:
@@ -472,8 +481,8 @@ def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_sub
 
 def acnPlot(pdb_code):
     colors = px.colors.sequential.dense
-    if os.path.isfile("molecules/"+pdb_code+".dat"):
-        fp = np.loadtxt("molecules/"+pdb_code+".dat")
+    if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
+        fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
         DI=fp[fp[:,0]==1]
         x = DI[:,1]
         y = DI[:,3]
@@ -500,15 +509,18 @@ def acnPlot(pdb_code):
         print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
     
 def calculate_writheFP(pdb_code):
-    os.popen(r"getFingerPrint "+r"molecules/"+pdb_code+r".xyz"+r" "+r"molecules/"+pdb_code+r".dat")  
+    if not os.path.isdir(r"CleanedSKMTWr/"):
+        os.mkdir(r"CleanedSKMTWr/")
+    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code+r".dat"):
+        os.popen(r"getFingerPrint "+r"CleanedSKMT/"+pdb_code+r".xyz"+r" "+r"CleanedSKMTWr/"+pdb_code+r".dat")  
     
 
 def view_similar_sections(pdb_code1,pdb_code2,cutOff):
     comp = compare_molecules(pdb_code1,pdb_code2,cutOff)
-    mol1 = np.genfromtxt('molecules/'+pdb_code1+'.xyz')
-    mol2 = np.genfromtxt('molecules/'+pdb_code2+'.xyz')
-    DI1 = np.genfromtxt("molecules/"+pdb_code1+".dat")
-    DI2 = np.genfromtxt("molecules/"+pdb_code2+".dat")
+    mol1 = np.genfromtxt('CleanedSKMT/'+pdb_code1+'.xyz')
+    mol2 = np.genfromtxt('CleanedSKMT/'+pdb_code2+'.xyz')
+    DI1 = np.genfromtxt("CleanedSKMTWr/"+pdb_code1+".dat")
+    DI2 = np.genfromtxt("CleanedSKMTWr/"+pdb_code2+".dat")
     x1, y1, z1 = mol1[:,0], mol1[:,1], mol1[:,2]
     x2, y2, z2 = mol2[:,0], mol2[:,1], mol2[:,2]
     colors = px.colors.sequential.dense
@@ -608,10 +620,10 @@ def view_similar_sections(pdb_code1,pdb_code2,cutOff):
 
 
 def view_molecule_helical(pdb_code):
-    if os.path.isfile('molecules/'+pdb_code+'.xyz'):
-        mol = np.genfromtxt('molecules/'+pdb_code+'.xyz')
-        if os.path.isfile("molecules/"+pdb_code+".dat"):
-            fp = np.loadtxt("molecules/"+pdb_code+".dat")
+    if os.path.isfile('CleanedSKMT/'+pdb_code+'.xyz'):
+        mol = np.genfromtxt('CleanedSKMT/'+pdb_code+'.xyz')
+        if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
+            fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
             DI=fp[fp[:,0]==1]
             res = find_helical_sections(DI)
             colors = px.colors.sequential.dense
@@ -670,7 +682,7 @@ def view_molecule_helical(pdb_code):
             print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
     
     else:
-        print("Smoothed kmt curve does not exist you must make it first: run sw.skmt(pdb_code,chain_id)")
+        print("Smoothed SKMT curve does not exist you must make it first: run sw.skmt(pdb_code,chain_id)")
 
         
 def extract_nums(text):
@@ -700,17 +712,17 @@ def compare_prep(pdb_code):
     
 
 def compare_molecules(pdb_code1,pdb_code2,cutOff):
-    if not os.path.isfile(r"molecules/"+pdb_code1+r".dat"):
+    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code1+r".dat"):
         compare_prep(pdb_code1)
-    if not os.path.isfile(r"molecules/"+pdb_code2+r".dat"):
+    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code2+r".dat"):
         compare_prep(pdb_code2)
-    get_data=subprocess.check_output(r"compareFingerPrints "+r"molecules/"+pdb_code1+r".xyz"+r" "+r"molecules/"+pdb_code2+r".xyz "+str(cutOff),shell=True, encoding='utf-8')
+    get_data=subprocess.check_output(r"compareFingerPrints "+r"CleanedSKMT/"+pdb_code1+r".xyz"+r" "+r"CleanedSKMT/"+pdb_code2+r".xyz "+str(cutOff),shell=True, encoding='utf-8')
     return toPairs(list(extract_nums(get_data)))
 
 def compare_database(pdb_code,cutOff=0.05):
     if not os.path.isdir(os.getcwd()+'/comparisons/'):
         os.mkdir(os.getcwd()+'/comparisons/')
-    comstr = [r"compareToLibrary",r"molecules/"+pdb_code+r".xyz",r"data/CleanedKMT",str(cutOff),pdb_code]
+    comstr = [r"compareToLibrary",r"CleanedSKMT/"+pdb_code+r".xyz",r"CleanedSKMT",str(cutOff),pdb_code]
     popen = subprocess.Popen(comstr, stdout=subprocess.PIPE, universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line 
@@ -720,15 +732,20 @@ def compare_database(pdb_code,cutOff=0.05):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def compareToDatabase(pdb_code,cutoff=0.05):
-    for path in compare_database(pdb_code,cutoff):
-        print(path,  end='\x1b[1K\r')
+    if not os.path.isfile(r"CleanedSKMT/"+pdb_code+r".xyz"):
+        compare_prep(pdb_code)
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
+        for path in compare_database(pdb_code,cutoff):
+            print(path,  end='\x1b[1K\r')
+    else:
+        return 'You\'ve already performed this comparison, the results are saved at:\n' + os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'
         
 def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
-    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat'):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
         return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
     else:
         comps = []
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat') as flin:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat') as flin:
             for line in flin:
                 comps+=[line.split(' ')]
         globally_similar = []
@@ -738,7 +755,7 @@ def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
             comps[i][-1] = comps[i][-1][:-1]
             if comps[i][-2]>pc_sim and comps[i][-3]>pc_sim:
                 globally_similar.append(comps[i])
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
             for i in range(len(globally_similar)-1):
                 strout = ' '.join(map(str,globally_similar[i]))
                 flout.write(strout+'\n')
@@ -746,11 +763,11 @@ def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
         return globally_similar
 
 def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
-    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat'):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
         return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
     else:
         comps = []
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'.dat') as flin:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat') as flin:
             for line in flin:
                 comps+=[line.split(' ')]
         subset_similar = []
@@ -760,7 +777,7 @@ def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
             comps[i][-1] = comps[i][-1][:-1]
             if comps[i][-3]>=pc_sim:
                 subset_similar.append(comps[i])
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
             for i in range(len(subset_similar)-1):
                 strout = ' '.join(map(str,subset_similar[i]))
                 flout.write(strout+'\n')
@@ -768,7 +785,7 @@ def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
         return subset_similar
 
 def view_CATH_percentages(pdb_code,cutoff=0.05,pc_sim=0.8):
-    comp_codes = [i[-1][-8:-4] for i in find_globally_similar_proteins(pdb_code,cutoff,pc_sim)]
+    comp_codes = [i[-1][-8:-4] for i in  find_globally_similar_proteins(pdb_code,cutoff,pc_sim)]
     t=[]
     for code in comp_codes:
         page = requests.get('https://www.rcsb.org/annotations/'+code.upper())
@@ -809,7 +826,7 @@ def data_for_cylinder_along_z(center_x,center_y,radius,height_z):
     return x_grid,y_grid,z_grid
 
 def plot_molecule_tube(pdb_code):
-    file_loc = 'molecules/'+pdb_code+'.xyz'
+    file_loc = 'CleanedSKMT/'+pdb_code+'.xyz'
     times = 25
     mol = np.genfromtxt(file_loc)
     Xc,Yc,Zc = data_for_cylinder_along_arb(mol[0],(mol[1]-mol[0])/np.linalg.norm(mol[1]-mol[0]),np.linalg.norm(mol[1]-mol[0]))
