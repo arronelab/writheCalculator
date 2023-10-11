@@ -15,3 +15,5 @@ git clone https://github.com/arronelab/SWRITHE.git
 cd SWRITHE
 make
 ```
+
+This notebook is maintained by Arron Bale, email me at arron.n.bale@durham.ac.uk if you need any help with installation or potential new features
