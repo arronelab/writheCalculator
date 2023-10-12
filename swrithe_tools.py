@@ -21,11 +21,13 @@ import csv
 from collections import Counter
 import pandas as pd
 
+# Fetch and save PDB file form RCSB.
 
 def get_pdb(pdb_code):
-    # Fetch and load structure
     urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'CleanedSKMT/'+pdb_code+'.pdb')
     print('File saved to: '+'CleanedSKMT/'+pdb_code+'.pdb')
+
+# Fetch list of chains in the PDB file
 
 def get_chains_from_biotite(pdb_code):
     # Fetch and load structure
@@ -34,18 +36,29 @@ def get_chains_from_biotite(pdb_code):
     array = mmtf.get_structure(mmtf_file, model=1)
     array = array[struc.filter_amino_acids(array)]
     return struc.get_chains(array)    
-    
+
+# Convert list of letters into a string
+
 def convert(s):
     new = ""
     for x in s:
         new+= x
     return new
-    
+
+# Split string into a list of letters 
+
+def split(word):
+    return [char for char in word]
+
+# To account for questionable SS assignment, replaces any singleton SSEs, e.g. --S-- -> -----
+
 def simple_ss_clean(fp):
     for i in range(len(fp)-1):
         if fp[i-1]==fp[i+1] and fp[i-1]!=fp[i]:
             fp[i]=fp[i-1]
     return convert(fp)
+
+# Given a list of vertices, returns the list of edges connecting the vertices. Needed for the skmt algorithm.
 
 def get_all_edges(curve):
     edges=[]
@@ -53,8 +66,7 @@ def get_all_edges(curve):
         edges.append([curve[i-1],curve[i]])
     return edges
 
-def split(word):
-    return [char for char in word]
+# Given a list of SS type per amino acid, return a list of grouped SSEs and their lengths, e.g. ---SS -> [['-',3],['S',2]]
 
 def get_sses(ss):
     sses=[]
@@ -70,6 +82,8 @@ def get_sses(ss):
             i += 1
     sses.append([ss[-1], count])
     return sses
+
+# Returns True if the edge defined by the points q1,q2 intersects the triangle defined by points p1,p2,p3
 
 def intersect_line_triangle(q1,q2,p1,p2,p3):
     def signed_tetra_volume(a,b,c,d):
@@ -88,6 +102,8 @@ def intersect_line_triangle(q1,q2,p1,p2,p3):
             return True
     return False
 
+# Writes a list of 3D coordinates to a file.
+
 def write_curve_to_file(curve,outfile_name):
     with open(outfile_name,'w+') as f:
         for i in range(len(curve)-1):
@@ -96,6 +112,8 @@ def write_curve_to_file(curve,outfile_name):
             f.write('\n')
         f.write(' '.join(map(str,curve[-1])))
         f.close()
+
+# Writes a FASTA file from a given PDB file
         
 def pdb_to_fasta(pdb_code,chain):
     pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
@@ -127,6 +145,8 @@ def pdb_to_fasta(pdb_code,chain):
     with open(pdb_file_loc[:-4]+'.fasta','w+') as fout:
         fout.write(chain_dict[chain])
 
+# Given a SS prediction from PSIPRED, writes the SS fingeprint to file (with the simple cleaning). 
+
 def get_ss_fp_psipred(fasta_file_loc):
     dssp_to_simp = {"I" : "H",
                  "S" : "-",
@@ -144,20 +164,28 @@ def get_ss_fp_psipred(fasta_file_loc):
     ss = [dssp_to_simp[i[2]] for i in lines]
     return get_sses(simple_ss_clean(ss))
 
+# Given a SS fingerprint file, returns the list of SS types and lengths as in get_sses(ss)
+
 def get_ss_fp(fp_file_loc):
     with open(fp_file_loc,'r') as fin:
         for line in fin:
             ss=line.split()[0]
     return get_sses(ss)
 
+# Using biobox, gets the coordinates of the CA backbone from a PDB file.
+
 def get_coords(pdb_file_loc,chain):
     M = bb.Molecule(pdb_file_loc)
     ca = M.atomselect(chain,'*','CA')
     return ca
 
+# Using PSIPREDauto, makes a request to PSIPRED to produce a SS prediction for a given FASTA file.
+
 def get_fasta_file(pdb_code):
     pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
     single_submit(pdb_file_loc[:-4]+'.fasta', "foo@bar.com", '')
+
+# Performs the full skmt algorithm. See the paper for details.
 
 def skmt(pdb_code,chain):
     if not os.path.isfile(r'CleanedSKMT/'+pdb_code+'.xyz'):
