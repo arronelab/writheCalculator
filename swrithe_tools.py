@@ -21,13 +21,11 @@ import csv
 from collections import Counter
 import pandas as pd
 
-# Fetch and save PDB file form RCSB.
 
 def get_pdb(pdb_code):
+    # Fetch and load structure
     urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'CleanedSKMT/'+pdb_code+'.pdb')
     print('File saved to: '+'CleanedSKMT/'+pdb_code+'.pdb')
-
-# Fetch list of chains in the PDB file
 
 def get_chains_from_biotite(pdb_code):
     # Fetch and load structure
@@ -36,29 +34,18 @@ def get_chains_from_biotite(pdb_code):
     array = mmtf.get_structure(mmtf_file, model=1)
     array = array[struc.filter_amino_acids(array)]
     return struc.get_chains(array)    
-
-# Convert list of letters into a string
-
+    
 def convert(s):
     new = ""
     for x in s:
         new+= x
     return new
-
-# Split string into a list of letters 
-
-def split(word):
-    return [char for char in word]
-
-# To account for questionable SS assignment, replaces any singleton SSEs, e.g. --S-- -> -----
-
+    
 def simple_ss_clean(fp):
     for i in range(len(fp)-1):
         if fp[i-1]==fp[i+1] and fp[i-1]!=fp[i]:
             fp[i]=fp[i-1]
     return convert(fp)
-
-# Given a list of vertices, returns the list of edges connecting the vertices. Needed for the skmt algorithm.
 
 def get_all_edges(curve):
     edges=[]
@@ -66,7 +53,8 @@ def get_all_edges(curve):
         edges.append([curve[i-1],curve[i]])
     return edges
 
-# Given a list of SS type per amino acid, return a list of grouped SSEs and their lengths, e.g. ---SS -> [['-',3],['S',2]]
+def split(word):
+    return [char for char in word]
 
 def get_sses(ss):
     sses=[]
@@ -82,8 +70,6 @@ def get_sses(ss):
             i += 1
     sses.append([ss[-1], count])
     return sses
-
-# Returns True if the edge defined by the points q1,q2 intersects the triangle defined by points p1,p2,p3
 
 def intersect_line_triangle(q1,q2,p1,p2,p3):
     def signed_tetra_volume(a,b,c,d):
@@ -102,8 +88,6 @@ def intersect_line_triangle(q1,q2,p1,p2,p3):
             return True
     return False
 
-# Writes a list of 3D coordinates to a file.
-
 def write_curve_to_file(curve,outfile_name):
     with open(outfile_name,'w+') as f:
         for i in range(len(curve)-1):
@@ -112,8 +96,6 @@ def write_curve_to_file(curve,outfile_name):
             f.write('\n')
         f.write(' '.join(map(str,curve[-1])))
         f.close()
-
-# Writes a FASTA file from a given PDB file
         
 def pdb_to_fasta(pdb_code,chain):
     pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
@@ -145,8 +127,6 @@ def pdb_to_fasta(pdb_code,chain):
     with open(pdb_file_loc[:-4]+'.fasta','w+') as fout:
         fout.write(chain_dict[chain])
 
-# Given a SS prediction from PSIPRED, writes the SS fingeprint to file (with the simple cleaning). 
-
 def get_ss_fp_psipred(fasta_file_loc):
     dssp_to_simp = {"I" : "H",
                  "S" : "-",
@@ -164,28 +144,20 @@ def get_ss_fp_psipred(fasta_file_loc):
     ss = [dssp_to_simp[i[2]] for i in lines]
     return get_sses(simple_ss_clean(ss))
 
-# Given a SS fingerprint file, returns the list of SS types and lengths as in get_sses(ss)
-
 def get_ss_fp(fp_file_loc):
     with open(fp_file_loc,'r') as fin:
         for line in fin:
             ss=line.split()[0]
     return get_sses(ss)
 
-# Using biobox, gets the coordinates of the CA backbone from a PDB file.
-
 def get_coords(pdb_file_loc,chain):
     M = bb.Molecule(pdb_file_loc)
     ca = M.atomselect(chain,'*','CA')
     return ca
 
-# Using PSIPREDauto, makes a request to PSIPRED to produce a SS prediction for a given FASTA file.
-
 def get_fasta_file(pdb_code):
     pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
     single_submit(pdb_file_loc[:-4]+'.fasta', "foo@bar.com", '')
-
-# Performs the full skmt algorithm. See the paper for details.
 
 def skmt(pdb_code,chain):
     if not os.path.isfile(r'CleanedSKMT/'+pdb_code+'.xyz'):
@@ -461,12 +433,12 @@ def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_sub
         x = DI[:,1]
         y = DI[:,2]
         fig=go.Figure()
-        fig.add_trace(go.Scatter(x=x,y=y,mode='lines',name=pdb_code.upper(),marker=dict(color='black',size=10),
+        fig.add_trace(go.Scatter(x=x,y=y,mode='lines',name=pdb_code.upper(),marker=dict(color=colors[-1],size=10),
                              line=dict(width=5)))
         if highlight_helical_subsections:
             for i in range(len(res1)):
-                stindex = np.where(x == res1[i][0])[0][0]
-                endex = np.where(x==res1[i][1])[0][0]
+                stindex = np.where(x == res1[i][0]-5)[0][0]
+                endex = np.where(x==res1[i][1]-5)[0][0]
                 fig.add_trace(go.Scatter(x=x[stindex:endex],y=y[stindex:endex],
                                            mode='lines',
                                           name='Helical Subsection '+str(i+1),
@@ -654,30 +626,54 @@ def view_molecule_helical(pdb_code):
             fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
             DI=fp[fp[:,0]==1]
             res = find_helical_sections(DI)
-            colors = px.colors.sequential.dense
+            colors = px.colors.sequential.Plasma
             colspace = np.linspace(0,10,len(res)+2)[1:-1]
+            file_loc = 'CleanedSKMT/'+pdb_code+'.xyz'
+            times = 25
+            mol = np.genfromtxt(file_loc)
+            Xc,Yc,Zc = data_for_cylinder_along_arb(mol[0],
+                                                   (mol[1]-mol[0])/np.linalg.norm(mol[1]-mol[0]),
+                                                   int(np.linalg.norm(mol[1]-mol[0])))
+            added_lengths=[int(np.linalg.norm(mol[1]-mol[0]))]
+            for i in range(2,len(mol)):
+                normalised_tangent =  (mol[i]-mol[i-1])/np.linalg.norm(mol[i]-mol[i-1])
+                prev_normalised_tangent = (mol[i-1]-mol[i-2])/np.linalg.norm(mol[i-1]-mol[i-2])
+                for j in range(1,times):
+                    cap_data = data_for_cylinder_along_arb(mol[i-1],
+                                                           ((times-j)/(times-1))*prev_normalised_tangent + (j/(times-1))*normalised_tangent,
+                                                           1)
+                    Xc = np.concatenate((Xc,cap_data[0]),axis=0)
+                    Yc = np.concatenate((Yc,cap_data[1]),axis=0)
+                    Zc = np.concatenate((Zc,cap_data[2]),axis=0)
 
-            x = mol[:,0]
-            y = mol[:,1]
-            z = mol[:,2]
-            cols = ['black' for i in range(len(x))]
+                edge_data = data_for_cylinder_along_arb(mol[i-1],
+                                                        normalised_tangent,
+                                                        int(np.linalg.norm(mol[i]-mol[i-1]))
+                                                       )
+                added_lengths.append(int(np.linalg.norm(mol[i]-mol[i-1]))+times-1)
+                Xc = np.concatenate((Xc,edge_data[0]),axis=0)
+                Yc = np.concatenate((Yc,edge_data[1]),axis=0)
+                Zc = np.concatenate((Zc,edge_data[2]),axis=0)
+            surcol = 10*np.ones(Xc.shape)
             for i in range(len(res)):
-                stindex = np.where(DI[:,1] == res[i][0])[0][0]
-                endex = np.where(DI[:,1]==res[i][1])[0][0]
-                for j in range(stindex,endex):
-                    cols[j] = colors[int(colspace[i])]
+                        stindex = np.where(DI[:,1] == res[i][0]-5)[0][0]
+                        endex = np.where(DI[:,1]==res[i][1]-5)[0][0]
+                        for j in range(sum(added_lengths[:stindex]),sum(added_lengths[:endex])):
+                                surcol[j] = colspace[i]*np.ones(surcol[j].shape)
+            lighting_effects = dict(ambient=0.5, diffuse=0.25, roughness = 0.9, specular=0.65, fresnel=1)
             fig = go.Figure()
-            fig.add_trace(go.Scatter3d(
-                x=x, y=y, z=z,
-                marker=dict(
-                    size=1,
-                    color=cols
-                ),
-                line=dict(
-                    width=15,
-                    color=cols
-                ),))
-            fig['layout']['showlegend'] = False
+            fig.add_trace(go.Surface(x=Xc, y=Yc, z=Zc,
+                                     showscale=False,
+                                     surfacecolor=surcol,
+                                     colorscale='dense',
+                                     cmin=0,
+                                     cmax=10,
+                                     #lighting=dict(lighting_effects),
+                                     #lightposition=dict(x=1000,y=1000,z=1000),
+                                     hoverinfo='none'
+                                    )
+                         )
+            fig.update_layout(width=1000,height=1000)
             fig.update_layout(
             scene=dict(
                 xaxis_title='',
@@ -704,7 +700,6 @@ def view_molecule_helical(pdb_code):
                     nticks=0,
                     showticklabels=False),),
             )
-            fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
             return fig.show()
         else:
             print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
