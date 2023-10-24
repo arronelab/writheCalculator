@@ -829,23 +829,23 @@ def view_CATH_percentages(pdb_code,cutoff=0.05,pc_sim=0.8):
     fldf = fldf.sort_values('Percentage',ascending=False)
     return fldf.head()
 
-def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.8):
-    z = np.linspace(0, height_z, int(height_z))
-    theta = np.linspace(0, 2*np.pi,25)
-    theta_grid, z_grid=np.meshgrid(theta, z)
-    tperp = np.sqrt(tandirec[0]*tandirec[0] + tandirec[1]*tandirec[1])
-    tperp2 =np.sqrt(4.0*tandirec[0]*tandirec[0]*tandirec[1]*tandirec[1] + tperp*tperp*tandirec[2]*tandirec[2])
-    x_grid = -radius*tandirec[0]*np.cos(theta_grid)/tperp - radius*tandirec[1]*tandirec[2]*np.sin(theta_grid)/tperp2+ tandirec[0]*z_grid + center[0]
-    y_grid = radius*tandirec[1]*np.cos(theta_grid)/tperp - radius*tandirec[0]*tandirec[2]*np.sin(theta_grid)/tperp2+ tandirec[1]*z_grid + center[1]
-    z_grid = 2.0*radius*tandirec[0]*tandirec[1]*np.sin(theta_grid)/tperp2+ tandirec[2]*z_grid + center[2]
-    return x_grid,y_grid,z_grid
-
-def data_for_cylinder_along_z(center_x,center_y,radius,height_z):
-    z = np.linspace(0, height_z, int(5*height_z))
-    theta = np.linspace(0, 2*np.pi, 25)
-    theta_grid, z_grid=np.meshgrid(theta, z)
-    x_grid = radius*np.cos(theta_grid) + center_x
-    y_grid = radius*np.sin(theta_grid) + center_y
+def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.6):
+    if np.abs(1.0-tandirec[2])>0.0001:
+        z = np.linspace(0, height_z, int(height_z))  
+        theta = np.linspace(0, 2*np.pi,25)
+        theta_grid, z_grid=np.meshgrid(theta, z)
+        tperp = np.sqrt(tandirec[0]*tandirec[0] + tandirec[1]*tandirec[1])
+        x_grid = (radius/tperp)*(tandirec[1]*np.cos(theta_grid) + tandirec[0]*tandirec[2]*np.sin(theta_grid))  + tandirec[0]*z_grid + center[0]
+        y_grid = (radius/tperp)*(-tandirec[0]*np.cos(theta_grid)+ tandirec[1]*tandirec[2]*np.sin(theta_grid)) + tandirec[1]*z_grid + center[1]
+        z_grid = radius*(tandirec[2]**2-1)*np.sin(theta_grid)/tperp+ tandirec[2]*z_grid + center[2]
+    else:
+        z = np.linspace(0, height_z, int(height_z))  
+        theta = np.linspace(0, 2*np.pi,25)
+        theta_grid, z_grid=np.meshgrid(theta, z)
+        x_grid = radius*np.cos(theta_grid) + center[0]
+        y_grid = radius*np.sin(theta_grid) + center[1]
+        z_grid = tandirec[2]*z_grid + center[2]
+       
     return x_grid,y_grid,z_grid
 
 def plot_molecule_tube(pdb_code):
