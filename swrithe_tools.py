@@ -761,7 +761,7 @@ def compareToDatabase(pdb_code,cutoff=0.05):
         for path in compare_database(pdb_code,cutoff):
             print(path,  end='\x1b[1K\r')
     else:
-        return 'You\'ve already performed this comparison, the results are saved at:\n' + os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'
+        return 'You\'ve already performed this comparison, the results are saved at: \n' + os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'
         
 def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
     if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
