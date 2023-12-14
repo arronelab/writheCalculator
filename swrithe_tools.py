@@ -24,8 +24,8 @@ import pandas as pd
 
 def get_pdb(pdb_code):
     # Fetch and load structure
-    urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'CleanedSKMT/'+pdb_code+'.pdb')
-    print('File saved to: '+'CleanedSKMT/'+pdb_code+'.pdb')
+    urllib.request.urlretrieve('http://files.rcsb.org/download/'+pdb_code+'.pdb', 'data/CleanedSKMT/'+pdb_code+'.pdb')
+    print('File saved to: '+'data/CleanedSKMT/'+pdb_code+'.pdb')
 
 def get_chains_from_biotite(pdb_code):
     # Fetch and load structure
