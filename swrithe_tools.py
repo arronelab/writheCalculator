@@ -150,10 +150,22 @@ def get_ss_fp(fp_file_loc):
             ss=line.split()[0]
     return get_sses(ss)
 
-def get_coords(pdb_file_loc,chain):
-    M = bb.Molecule(pdb_file_loc)
-    ca = M.atomselect(chain,'*','CA')
-    return ca
+def get_coords(pdb_code):
+    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+        'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+        'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+        'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+    # Fetch and load structure
+    file_name = rcsb.fetch(pdb_code.upper(), "mmtf", gettempdir())
+    mmtf_file = mmtf.MMTFFile.read(file_name)
+    array = mmtf.get_structure(mmtf_file, model=1)
+    array = array[struc.filter_amino_acids(array)]
+    array = array[array.chain_id==struc.get_chains(array)[0]]
+    array = array[array.atom_name=='CA']
+    array = array[array.hetero==False]
+    array = array[np.array([i.res_name in list(d.keys()) for i in array])]
+    coords = [i.coord for i in array]
+    return coords
 
 def get_fasta_file(pdb_code):
     pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
@@ -162,15 +174,12 @@ def get_fasta_file(pdb_code):
 def skmt(pdb_code,chain):
     if not os.path.isfile(r'data/CleanedSKMT/'+pdb_code+'.xyz'):
         pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
-        mol = get_coords(pdb_file_loc,chain)
+        mol = get_coords(pdb_code)
         if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
             pdb_to_fasta(pdb_code,chain)
         if not os.path.isdir(pdb_file_loc[:-4]+'.fasta output/'):
             get_fasta_file(pdb_code)
         ss = get_ss_fp_psipred(pdb_file_loc[:-4]+'.fasta')
-        shutil.rmtree(pdb_file_loc[:-4]+'.fasta output/')
-        os.remove(r'data/CleanedSKMT/'+pdb_code+'.pdb')
-        os.remove(pdb_file_loc[:-4]+'.fasta')
         splitcurve = []
         index = 0
         for i in ss:
@@ -218,6 +227,7 @@ def skmt(pdb_code,chain):
                         else:
                             idx+=1
             else:
+                print(splitcurve[subsec])
                 splitcurve[subsec] = [splitcurve[subsec][0]]
                 newcurve = []
                 for l in range(len(splitcurve)):
@@ -230,6 +240,9 @@ def skmt(pdb_code,chain):
         if not np.array_equal(newcurve[-1],mol[-1]):
             newcurve.append(mol[-1])
         write_curve_to_file(newcurve,pdb_file_loc[:-4]+'.xyz')
+        shutil.rmtree(pdb_file_loc[:-4]+'.fasta output/')
+        os.remove(r'data/CleanedSKMT/'+pdb_code+'.pdb')
+        os.remove(pdb_file_loc[:-4]+'.fasta')
         return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
     else:
         pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
