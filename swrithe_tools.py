@@ -772,7 +772,7 @@ def compareToDatabase(pdb_code,cutoff=0.05):
         compare_prep(pdb_code)
     if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
         for path in compare_database(pdb_code,cutoff):
-            print(path,  end='\x1b[1K\r')
+            print(path,  end='\r')
     else:
         return 'You\'ve already performed this comparison, the results are saved at: \n' + os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'
         
