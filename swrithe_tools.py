@@ -98,7 +98,7 @@ def write_curve_to_file(curve,outfile_name):
         f.close()
         
 def pdb_to_fasta(pdb_code,chain):
-    pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
+    pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
     aa3to1={
    'ALA':'A', 'VAL':'V', 'PHE':'F', 'PRO':'P', 'MET':'M',
    'ILE':'I', 'LEU':'L', 'ASP':'D', 'GLU':'E', 'LYS':'K',
@@ -156,12 +156,12 @@ def get_coords(pdb_file_loc,chain):
     return ca
 
 def get_fasta_file(pdb_code):
-    pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
+    pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
     single_submit(pdb_file_loc[:-4]+'.fasta', "foo@bar.com", '')
 
 def skmt(pdb_code,chain):
-    if not os.path.isfile(r'CleanedSKMT/'+pdb_code+'.xyz'):
-        pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
+    if not os.path.isfile(r'data/CleanedSKMT/'+pdb_code+'.xyz'):
+        pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
         mol = get_coords(pdb_file_loc,chain)
         if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
             pdb_to_fasta(pdb_code,chain)
@@ -169,7 +169,7 @@ def skmt(pdb_code,chain):
             get_fasta_file(pdb_code)
         ss = get_ss_fp_psipred(pdb_file_loc[:-4]+'.fasta')
         shutil.rmtree(pdb_file_loc[:-4]+'.fasta output/')
-        os.remove(r'CleanedSKMT/'+pdb_code+'.pdb')
+        os.remove(r'data/CleanedSKMT/'+pdb_code+'.pdb')
         os.remove(pdb_file_loc[:-4]+'.fasta')
         splitcurve = []
         index = 0
@@ -232,9 +232,9 @@ def skmt(pdb_code,chain):
         write_curve_to_file(newcurve,pdb_file_loc[:-4]+'.xyz')
         return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
     else:
-        pdb_file_loc=r'CleanedSKMT/'+pdb_code+'.pdb'
-        if os.path.isfile(r'CleanedSKMT/'+pdb_code+'.pdb'):
-            os.remove(r'CleanedSKMT/'+pdb_code+'.pdb')
+        pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
+        if os.path.isfile(r'data/CleanedSKMT/'+pdb_code+'.pdb'):
+            os.remove(r'data/CleanedSKMT/'+pdb_code+'.pdb')
         if os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
             os.remove(pdb_file_loc[:-4]+'.fasta')
         return 'SKMT Curve is saved at ' + pdb_file_loc[:-4]+'.xyz'
@@ -413,8 +413,8 @@ def find_roadie_sections(fp):
 
 def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_subsections=False):
     colors = px.colors.sequential.dense
-    if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
-        fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
+    if os.path.isfile("data/CleanedSKMTWr/"+pdb_code+".dat"):
+        fp = np.loadtxt("data/CleanedSKMTWr/"+pdb_code+".dat")
         DI=fp[fp[:,0]==1]
         if highlight_helical_subsections:
             try:
@@ -481,8 +481,8 @@ def writhePlot(pdb_code,highlight_helical_subsections=False,highlight_roadie_sub
 
 def acnPlot(pdb_code):
     colors = px.colors.sequential.dense
-    if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
-        fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
+    if os.path.isfile("data/CleanedSKMTWr/"+pdb_code+".dat"):
+        fp = np.loadtxt("data/CleanedSKMTWr/"+pdb_code+".dat")
         DI=fp[fp[:,0]==1]
         x = DI[:,1]
         y = DI[:,3]
@@ -509,18 +509,18 @@ def acnPlot(pdb_code):
         print("you need to calculate the writhe finger print of this file first: run "+"calculate_writheFP(pdb_code)")
     
 def calculate_writheFP(pdb_code):
-    if not os.path.isdir(r"CleanedSKMTWr/"):
-        os.mkdir(r"CleanedSKMTWr/")
-    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code+r".dat"):
-        os.popen(r"getFingerPrint "+r"CleanedSKMT/"+pdb_code+r".xyz"+r" "+r"CleanedSKMTWr/"+pdb_code+r".dat")  
+    if not os.path.isdir(r"data/CleanedSKMTWr/"):
+        os.mkdir(r"data/CleanedSKMTWr/")
+    if not os.path.isfile(r"data/CleanedSKMTWr/"+pdb_code+r".dat"):
+        os.popen(r"getFingerPrint "+r"data/CleanedSKMT/"+pdb_code+r".xyz"+r" "+r"data/CleanedSKMTWr/"+pdb_code+r".dat")  
     
 
 def view_similar_sections(pdb_code1,pdb_code2,cutOff):
     comp = compare_molecules(pdb_code1,pdb_code2,cutOff)
-    mol1 = np.genfromtxt('CleanedSKMT/'+pdb_code1+'.xyz')
-    mol2 = np.genfromtxt('CleanedSKMT/'+pdb_code2+'.xyz')
-    DI1 = np.genfromtxt("CleanedSKMTWr/"+pdb_code1+".dat")
-    DI2 = np.genfromtxt("CleanedSKMTWr/"+pdb_code2+".dat")
+    mol1 = np.genfromtxt('data/CleanedSKMT/'+pdb_code1+'.xyz')
+    mol2 = np.genfromtxt('data/CleanedSKMT/'+pdb_code2+'.xyz')
+    DI1 = np.genfromtxt("data/CleanedSKMTWr/"+pdb_code1+".dat")
+    DI2 = np.genfromtxt("data/CleanedSKMTWr/"+pdb_code2+".dat")
     x1, y1, z1 = mol1[:,0], mol1[:,1], mol1[:,2]
     x2, y2, z2 = mol2[:,0], mol2[:,1], mol2[:,2]
     colors = px.colors.sequential.dense
@@ -620,15 +620,15 @@ def view_similar_sections(pdb_code1,pdb_code2,cutOff):
 
 
 def view_molecule_helical(pdb_code):
-    if os.path.isfile('CleanedSKMT/'+pdb_code+'.xyz'):
-        mol = np.genfromtxt('CleanedSKMT/'+pdb_code+'.xyz')
-        if os.path.isfile("CleanedSKMTWr/"+pdb_code+".dat"):
-            fp = np.loadtxt("CleanedSKMTWr/"+pdb_code+".dat")
+    if os.path.isfile('data/CleanedSKMT/'+pdb_code+'.xyz'):
+        mol = np.genfromtxt('data/CleanedSKMT/'+pdb_code+'.xyz')
+        if os.path.isfile("data/CleanedSKMTWr/"+pdb_code+".dat"):
+            fp = np.loadtxt("data/CleanedSKMTWr/"+pdb_code+".dat")
             DI=fp[fp[:,0]==1]
             res = find_helical_sections(DI)
             colors = px.colors.sequential.Plasma
             colspace = np.linspace(0,10,len(res)+2)[1:-1]
-            file_loc = 'CleanedSKMT/'+pdb_code+'.xyz'
+            file_loc = 'data/CleanedSKMT/'+pdb_code+'.xyz'
             times = 25
             mol = np.genfromtxt(file_loc)
             Xc,Yc,Zc = data_for_cylinder_along_arb(mol[0],
@@ -735,17 +735,17 @@ def compare_prep(pdb_code):
     
 
 def compare_molecules(pdb_code1,pdb_code2,cutOff):
-    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code1+r".dat"):
+    if not os.path.isfile(r"data/CleanedSKMTWr/"+pdb_code1+r".dat"):
         compare_prep(pdb_code1)
-    if not os.path.isfile(r"CleanedSKMTWr/"+pdb_code2+r".dat"):
+    if not os.path.isfile(r"data/CleanedSKMTWr/"+pdb_code2+r".dat"):
         compare_prep(pdb_code2)
-    get_data=subprocess.check_output(r"compareFingerPrints "+r"CleanedSKMT/"+pdb_code1+r".xyz"+r" "+r"CleanedSKMT/"+pdb_code2+r".xyz "+str(cutOff),shell=True, encoding='utf-8')
+    get_data=subprocess.check_output(r"compareFingerPrints "+r"data/CleanedSKMT/"+pdb_code1+r".xyz"+r" "+r"data/CleanedSKMT/"+pdb_code2+r".xyz "+str(cutOff),shell=True, encoding='utf-8')
     return toPairs(list(extract_nums(get_data)))
 
 def compare_database(pdb_code,cutOff=0.05):
     if not os.path.isdir(os.getcwd()+'/comparisons/'):
         os.mkdir(os.getcwd()+'/comparisons/')
-    comstr = [r"compareToLibrary",r"CleanedSKMT/"+pdb_code+r".xyz",r"CleanedSKMT",str(cutOff),pdb_code]
+    comstr = [r"compareToLibrary",r"data/CleanedSKMT/"+pdb_code+r".xyz",r"data/CleanedSKMT",str(cutOff),pdb_code]
     popen = subprocess.Popen(comstr, stdout=subprocess.PIPE, universal_newlines=True)
     for stdout_line in iter(popen.stdout.readline, ""):
         yield stdout_line 
@@ -755,7 +755,7 @@ def compare_database(pdb_code,cutOff=0.05):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def compareToDatabase(pdb_code,cutoff=0.05):
-    if not os.path.isfile(r"CleanedSKMT/"+pdb_code+r".xyz"):
+    if not os.path.isfile(r"data/CleanedSKMT/"+pdb_code+r".xyz"):
         compare_prep(pdb_code)
     if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
         for path in compare_database(pdb_code,cutoff):
@@ -849,7 +849,7 @@ def data_for_cylinder_along_arb(center,tandirec,height_z,radius=0.6):
     return x_grid,y_grid,z_grid
 
 def plot_molecule_tube(pdb_code):
-    file_loc = 'CleanedSKMT/'+pdb_code+'.xyz'
+    file_loc = 'data/CleanedSKMT/'+pdb_code+'.xyz'
     times = 25
     mol = np.genfromtxt(file_loc)
     Xc,Yc,Zc = data_for_cylinder_along_arb(mol[0],(mol[1]-mol[0])/np.linalg.norm(mol[1]-mol[0]),np.linalg.norm(mol[1]-mol[0]))
