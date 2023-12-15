@@ -227,7 +227,6 @@ def skmt(pdb_code,chain):
                         else:
                             idx+=1
             else:
-                print(splitcurve[subsec])
                 splitcurve[subsec] = [splitcurve[subsec][0]]
                 newcurve = []
                 for l in range(len(splitcurve)):
@@ -777,11 +776,11 @@ def compareToDatabase(pdb_code,cutoff=0.05):
         return 'You\'ve already performed this comparison, the results are saved at: \n' + os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'
         
 def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
-    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'.dat'):
         return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
     else:
         comps = []
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat') as flin:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'.dat') as flin:
             for line in flin:
                 comps+=[line.split(' ')]
         globally_similar = []
@@ -791,19 +790,22 @@ def find_globally_similar_proteins(pdb_code,cutoff=0.05,pc_sim=0.8):
             comps[i][-1] = comps[i][-1][:-1]
             if comps[i][-2]>pc_sim and comps[i][-3]>pc_sim:
                 globally_similar.append(comps[i])
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
-            for i in range(len(globally_similar)-1):
-                strout = ' '.join(map(str,globally_similar[i]))
-                flout.write(strout+'\n')
-            flout.write(' '.join(map(str,globally_similar[-1])))
-        return globally_similar
+        if len(globally_similar)>0:
+            with open(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+                for i in range(len(globally_similar)-1):
+                    strout = ' '.join(map(str,globally_similar[i]))
+                    flout.write(strout+'\n')
+                flout.write(' '.join(map(str,globally_similar[-1])))
+            return globally_similar
+        else:
+            return 'No similar subsections found'
 
 def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
-    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat'):
+    if not os.path.isfile(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'.dat'):
         return 'Comparison file doesn\'t exist, run sw.compareToDatabase('+str(pdb_code)+','+str(cutoff)+')'
     else:
         comps = []
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'.dat') as flin:
+        with open(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'.dat') as flin:
             for line in flin:
                 comps+=[line.split(' ')]
         subset_similar = []
@@ -813,12 +815,15 @@ def find_subset_similarities(pdb_code,cutoff=0.05,pc_sim=1.):
             comps[i][-1] = comps[i][-1][:-1]
             if comps[i][-3]>=pc_sim:
                 subset_similar.append(comps[i])
-        with open(os.getcwd()+'/comparisons/'+pdb_code+'_CleanedSKMT_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
-            for i in range(len(subset_similar)-1):
-                strout = ' '.join(map(str,subset_similar[i]))
-                flout.write(strout+'\n')
-            flout.write(' '.join(map(str,subset_similar[-1])))
-        return subset_similar
+        if len(subset_similar)>0:
+            with open(os.getcwd()+'/comparisons/'+pdb_code+'_'+str(cutoff)+'_'+str(pc_sim)+'.dat','w+') as flout:
+                for i in range(len(subset_similar)-1):
+                    strout = ' '.join(map(str,subset_similar[i]))
+                    flout.write(strout+'\n')
+                flout.write(' '.join(map(str,subset_similar[-1])))
+            return subset_similar
+        else:
+            return 'No similar subsections found'
 
 def view_CATH_percentages(pdb_code,cutoff=0.05,pc_sim=0.8):
     comp_codes = [i[-1][-8:-4] for i in  find_globally_similar_proteins(pdb_code,cutoff,pc_sim)]
