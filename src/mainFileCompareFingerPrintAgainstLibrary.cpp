@@ -35,19 +35,19 @@ int main( int argc, const char* argv[] )
 
 	// open the output file to write to
 
-	std::string outFileLoc = "comparisons/"+std::string(argv[4])+"_"+std::string(argv[2])+"_"+std::string(argv[3])+".dat";
+	std::string outFileLoc = "comparisons/"+std::string(argv[4])+"_"+std::string(argv[3])+".dat";
 	std::ofstream outFile;
 	outFile.open(outFileLoc);
 	int index=0;
 	for(const auto & entry : std::filesystem::directory_iterator(directory)){
 	  std::ifstream myfile2;
 	  std::string fl = entry.path();
-	  index++;
 	  using std::filesystem::directory_iterator;
 	  using fp = bool (*)( const std::filesystem::path&);
 	  int size_t = std::count_if(directory_iterator(directory), directory_iterator{}, (fp)std::filesystem::is_regular_file);
 	  ///int dir_size = std::count_if(std::filesystem::directory_iterator(directory), {}, std::filesystem::is_regular_file);
 	  std::cout << "\r" <<" Compared "<< index <<" of "<<size_t;
+	  index++;
 	  myfile2.open(fl);
 	  std::vector<point> points2;
 	  if (myfile2.is_open()) { 
