@@ -1,6 +1,6 @@
 # SWRITHE
-iPython notebook and supporting data to accompany "The SKMT Algorithm: A method for assessing and comparing
-underlying protein entanglement"
+iPython notebook and supporting data to accompany ["The SKMT Algorithm: A method for assessing and comparing
+underlying protein entanglement"](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011248)
 
 [![DOI](https://zenodo.org/badge/617996455.svg)](https://zenodo.org/badge/latestdoi/617996455)
 
