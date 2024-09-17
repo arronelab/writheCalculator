@@ -29,11 +29,12 @@ def get_pdb(pdb_code):
 
 def get_chains_from_biotite(pdb_code):
     # Fetch and load structure
-    file_name = rcsb.fetch(pdb_code.upper(), "mmtf", gettempdir())
-    mmtf_file = mmtf.MMTFFile.read(file_name)
-    array = mmtf.get_structure(mmtf_file, model=1)
-    array = array[struc.filter_amino_acids(array)]
-    return struc.get_chains(array)    
+    file_name = rcsb.fetch(pdb_code.upper(), "bcif", gettempdir())
+    bcif_file = strucio.load_structure(file_name)
+    # Filter to include only amino acids
+    array = bcif_file[struc.filter_amino_acids(bcif_file)]
+    # Extract and return chains
+    return struc.get_chains(array)     
     
 def convert(s):
     new = ""
@@ -150,21 +151,26 @@ def get_ss_fp(fp_file_loc):
             ss=line.split()[0]
     return get_sses(ss)
 
-def get_coords(pdb_code):
+def get_coords(pdb_code,chain):
     d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-        'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
-        'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
-        'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+         'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
     # Fetch and load structure
-    file_name = rcsb.fetch(pdb_code.upper(), "mmtf", gettempdir())
-    mmtf_file = mmtf.MMTFFile.read(file_name)
-    array = mmtf.get_structure(mmtf_file, model=1)
-    array = array[struc.filter_amino_acids(array)]
-    array = array[array.chain_id==struc.get_chains(array)[0]]
-    array = array[array.atom_name=='CA']
-    array = array[array.hetero==False]
-    array = array[np.array([i.res_name in list(d.keys()) for i in array])]
-    coords = [i.coord for i in array]
+    file_name = rcsb.fetch(pdb_code.upper(), "bcif", gettempdir())
+    bcif_file = strucio.load_structure(file_name)
+    # Filter to include only amino acids
+    array = bcif_file[struc.filter_amino_acids(bcif_file)]
+    # Select the first chain
+    array = array[array.chain_id == chain]
+    # Select alpha carbon (CA) atoms
+    array = array[array.atom_name == 'CA']
+    # Exclude hetero atoms
+    array = array[array.hetero == False]
+    # Filter residues based on the provided dictionary
+    array = array[np.array([residue.res_name in d for residue in array])]
+    # Extract coordinates
+    coords = [atom.coord for atom in array]
     return coords
 
 def get_fasta_file(pdb_code):
@@ -174,7 +180,7 @@ def get_fasta_file(pdb_code):
 def skmt(pdb_code,chain):
     if not os.path.isfile(r'data/CleanedSKMT/'+pdb_code+'.xyz'):
         pdb_file_loc=r'data/CleanedSKMT/'+pdb_code+'.pdb'
-        mol = get_coords(pdb_code)
+        mol = get_coords(pdb_code,chain)
         if not os.path.isfile(pdb_file_loc[:-4]+'.fasta'):
             pdb_to_fasta(pdb_code,chain)
         if not os.path.isdir(pdb_file_loc[:-4]+'.fasta output/'):
